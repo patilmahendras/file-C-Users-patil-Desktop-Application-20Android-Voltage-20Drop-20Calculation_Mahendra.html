@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Voltage Drop Calculation Software</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+body{
+font-family:Segoe UI;
+background:#f4f6f9;
+margin:0;
+padding:0;
+}
+
+.header{
+background:#003366;
+color:white;
+padding:15px;
+text-align:center;
+font-size:28px;
+font-weight:bold;
+}
+
+.subheader{
+background:#00509e;
+color:white;
+padding:8px;
+text-align:center;
+font-size:16px;
+}
+
+.container{
+width:98%;
+margin:auto;
+margin-top:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th{
+background:#003366;
+color:white;
+padding:10px;
+}
+
+td{
+padding:6px;
+border:1px solid #ccc;
+text-align:center;
+}
+
+input,select{
+width:100%;
+padding:6px;
+box-sizing:border-box;
+}
+
+.btn{
+background:#ffcc00;
+border:none;
+padding:10px 15px;
+margin:5px;
+cursor:pointer;
+font-weight:bold;
+border-radius:5px;
+}
+
+.btn:hover{
+opacity:0.85;
+}
+
+.pass{
+background:green;
+color:white;
+font-weight:bold;
+padding:5px;
+}
+
+.fail{
+background:red;
+color:white;
+font-weight:bold;
+padding:5px;
+}
+
+.footer{
+text-align:right;
+padding:10px;
+font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+Voltage Drop Calculation Software
+</div>
+
+<div class="subheader">
+SAUDI ARAMCO | SAES-J-902 | Prepared By : Mahendra Patil
+</div>
+
+<div class="container">
+
+<button class="btn" onclick="addRow()">
+<i class="fa fa-plus"></i> Add New Cable
+</button>
+
+<button class="btn" onclick="deleteRow()">
+<i class="fa fa-trash"></i> Delete Cable
+</button>
+
+<button class="btn" onclick="saveData()">
+<i class="fa fa-save"></i> Save
+</button>
+
+<button class="btn" onclick="window.print()">
+<i class="fa fa-print"></i> Print
+</button>
+
+<button class="btn" onclick="exportExcel()">
+<i class="fa fa-file-excel"></i> Export Excel
+</button>
+
+<button class="btn" onclick="exportPDF()">
+<i class="fa fa-file-pdf"></i> Export PDF
+</button>
+
+<table id="cableTable">
+
+<thead>
+
+<tr>
+<th>Cable Name</th>
+<th>Cable Size</th>
+<th>Voltage</th>
+<th>Length (m)</th>
+<th>Load</th>
+<th>Unit</th>
+<th>System</th>
+<th>Voltage Drop (V)</th>
+<th>Drop %</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>
+<input value="CABLE-1">
+</td>
+
+<td>
+<select>
+
+<option value="0.82">18 AWG</option>
+<option value="1.31">16 AWG</option>
+<option value="2.08">14 AWG</option>
+<option value="3.31">12 AWG</option>
+<option value="5.26">10 AWG</option>
+
+<option value="1.5">1.5 mm²</option>
+<option value="2.5">2.5 mm²</option>
+<option value="4">4 mm²</option>
+<option value="6">6 mm²</option>
+<option value="10">10 mm²</option>
+<option value="16">16 mm²</option>
+<option value="25">25 mm²</option>
+<option value="35">35 mm²</option>
+<option value="50">50 mm²</option>
+<option value="70">70 mm²</option>
+<option value="95">95 mm²</option>
+<option value="120">120 mm²</option>
+
+</select>
+</td>
+
+<td>
+<select>
+
+<option>24</option>
+<option>48</option>
+<option>110</option>
+<option>120</option>
+<option>220</option>
+<option>230</option>
+<option>380</option>
+<option>400</option>
+<option>415</option>
+<option>480</option>
+
+</select>
+</td>
+
+<td><input type="number" value="100"></td>
+
+<td><input type="number" value="5"></td>
+
+<td>
+<select>
+<option>A</option>
+<option>mA</option>
+<option>W</option>
+<option>kW</option>
+<option>HP</option>
+</select>
+</td>
+
+<td>
+<select>
+<option>AC</option>
+<option>DC</option>
+</select>
+</td>
+
+<td class="vdrop"></td>
+<td class="droppercent"></td>
+<td class="status"></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="footer">
+Saudi Aramco Voltage Drop Compliance Check
+</div>
+
+</div>
+
+<script>
+
+function calculate(){
+
+let rows=document.querySelectorAll("#cableTable tbody tr");
+
+rows.forEach(row=>{
+
+let size=parseFloat(row.cells[1].querySelector("select").value);
+
+let voltage=parseFloat(row.cells[2].querySelector("select").value);
+
+let length=parseFloat(row.cells[3].querySelector("input").value);
+
+let load=parseFloat(row.cells[4].querySelector("input").value);
+
+let unit=row.cells[5].querySelector("select").value;
+
+let system=row.cells[6].querySelector("select").value;
+
+if(unit==="mA")
+load=load/1000;
+
+if(unit==="W")
+load=load/voltage;
+
+if(unit==="kW")
+load=(load*1000)/voltage;
+
+if(unit==="HP")
+load=(load*746)/voltage;
+
+const rho=0.0175;
+
+let resistance=(rho*2*length)/size;
+
+let vdrop=load*resistance;
+
+let percent=(vdrop/voltage)*100;
+
+row.querySelector(".vdrop").innerHTML=
+vdrop.toFixed(2);
+
+row.querySelector(".droppercent").innerHTML=
+percent.toFixed(2)+" %";
+
+let limit=5;
+
+if(system==="DC")
+limit=10;
+
+if(percent<=limit){
+
+row.querySelector(".status").innerHTML=
+'<span class="pass">PASS</span>';
+
+}
+else{
+
+row.querySelector(".status").innerHTML=
+'<span class="fail">FAIL</span>';
+
+}
+
+});
+
+}
+
+setInterval(calculate,1000);
+
+function addRow(){
+
+let table=document.querySelector("#cableTable tbody");
+
+let row=table.rows[0].cloneNode(true);
+
+table.appendChild(row);
+
+}
+
+function deleteRow(){
+
+let table=document.querySelector("#cableTable tbody");
+
+if(table.rows.length>1){
+
+table.deleteRow(table.rows.length-1);
+
+}
+
+}
+
+function saveData(){
+
+localStorage.setItem(
+"VoltageDropData",
+document.querySelector("#cableTable tbody").innerHTML
+);
+
+alert("Data Saved Successfully");
+
+}
+
+window.onload=function(){
+
+let data=localStorage.getItem("VoltageDropData");
+
+if(data){
+
+document.querySelector("#cableTable tbody").innerHTML=data;
+
+}
+
+}
+
+function exportExcel(){
+
+let table=document.getElementById("cableTable");
+
+let html=table.outerHTML;
+
+let url='data:application/vnd.ms-excel,' +
+encodeURIComponent(html);
+
+let link=document.createElement("a");
+
+link.href=url;
+
+link.download="VoltageDrop.xls";
+
+link.click();
+
+}
+
+function exportPDF(){
+
+window.print();
+
+}
+
+</script>
+
+</body>
+</html>
